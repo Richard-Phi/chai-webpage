@@ -11,7 +11,7 @@ import {
   默认部件分析器
 } from "./component.js";
 import type { 笔画块, 结构描述字符 } from "./data.js";
-import { 二笔, 未知元素 } from "./element.js";
+import { 二笔, 未知元素, 结构符元素 } from "./element.js";
 import {
   优先表,
   type 基本复合体分析,
@@ -214,17 +214,29 @@ abstract class 复合体分析器<
 }
 
 export interface 默认复合体分析 extends 基本复合体分析 {
-  结构: 结构描述字符;
+  结构: 结构符元素;
 }
 
 class 默认复合体分析器 extends 复合体分析器<默认部件分析, 默认复合体分析> {
   static readonly type = "默认";
+  private 全部结构符元素: Set<结构符元素>;
+
+  constructor(x: 字形分析配置) {
+    super(x);
+    this.全部结构符元素 = new Set(
+      [...x.决策.keys(), ...x.决策空间.keys()].filter(
+        (y) => y instanceof 结构符元素,
+      ),
+    );
+  }
 
   分析(复合体: 复合体) {
     const 分析: 默认复合体分析 = {
       类型: "复合体",
       复合体,
-      结构: 复合体.结构描述字符,
+      结构: this.全部结构符元素
+        .values()
+        .find((x) => x.获取名称() === 复合体.结构描述字符)!,
       字根序列: [],
     };
     分析.字根序列.push(...this.顺序取根(复合体));
@@ -238,7 +250,9 @@ class 默认复合体分析器 extends 复合体分析器<默认部件分析, �
         类型: "复合体",
         复合体,
         字根序列,
-        结构: 复合体.结构描述字符,
+        结构: this.全部结构符元素
+          .values()
+          .find((x) => x.获取名称() === 复合体.结构描述字符)!,
         条件列表,
       });
     }

@@ -256,10 +256,10 @@ export class 取码器 {
   > = {
     是: (t, v) => t?.获取名称() === v,
     不是: (t, v) => t?.获取名称() !== v,
-    匹配: (t, v) => t !== undefined && new RegExp(v!).test(t.获取名称()),
-    不匹配: (t, v) => t !== undefined && !new RegExp(v!).test(t.获取名称()),
-    编码匹配: (t, v, m) => t !== undefined && new RegExp(v!).test(m.get(t)!),
-    编码不匹配: (t, v, m) => t !== undefined && !new RegExp(v!).test(m.get(t)!),
+    匹配: (t, v) => t !== undefined && new RegExp(v!, "u").test(t.获取名称()),
+    不匹配: (t, v) => t !== undefined && !new RegExp(v!, "u").test(t.获取名称()),
+    编码匹配: (t, v, m) => t !== undefined && new RegExp(v!, "u").test(m.get(t)!),
+    编码不匹配: (t, v, m) => t !== undefined && !new RegExp(v!, "u").test(m.get(t)!),
     存在: (t) => t !== undefined,
     不存在: (t) => t === undefined,
   };
@@ -360,7 +360,8 @@ export class 取码器 {
         stroke2 = signedIndex(strokes, object.strokeIndex * 2);
         return 二笔.创建(stroke1, stroke2 ?? 0);
       case "结构":
-        return "结构" in result ? new 结构符元素(result.结构) : undefined;
+        console.log(result);
+        return "结构" in result ? result.结构 : undefined;
       case "自定义":
         return signedIndex(
           result.自定义元素.get(object.subtype) ?? [],
