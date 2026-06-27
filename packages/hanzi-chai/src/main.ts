@@ -1,10 +1,11 @@
-import { 星空键道组装器, 默认组装器 } from "./assembly.js";
+import { 星空键道组装器, 默认组装器, 尺素组装器 } from "./assembly.js";
 import {
   二笔部件分析器,
   冰雪飞花部件分析器,
   张码部件分析器,
   逸码部件分析器,
   默认部件分析器,
+  尺素部件分析器
 } from "./component.js";
 import {
   二笔复合体分析器,
@@ -15,6 +16,7 @@ import {
   逸码复合体分析器,
   首右复合体分析器,
   默认复合体分析器,
+  尺素复合体分析器
 } from "./compound.js";
 import { 默认拼音分析器 } from "./pinyin.js";
 import { type 注册表, 获取注册表 } from "./registry.js";
@@ -58,6 +60,7 @@ export function 注册内置组件(registry: 注册表) {
     张码部件分析器,
     逸码部件分析器,
     冰雪飞花部件分析器,
+    尺素部件分析器
   ])
     registry.注册部件分析器(x);
   for (const x of [
@@ -69,9 +72,10 @@ export function 注册内置组件(registry: 注册表) {
     星空键道复合体分析器,
     首右复合体分析器,
     冰雪飞花复合体分析器,
+    尺素复合体分析器
   ])
     registry.注册复合体分析器(x);
-  for (const x of [默认组装器, 星空键道组装器]) registry.注册组装器(x);
+  for (const x of [默认组装器, 星空键道组装器, 尺素组装器]) registry.注册组装器(x);
   for (const x of [默认拼音分析器]) registry.注册拼音分析器(x);
   for (const x of [
     全符笔顺,

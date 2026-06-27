@@ -12,7 +12,8 @@ import {
   type 元素,
   取码器,
   type 拼音元素,
-  type 自定义元素,
+  自定义元素,
+  笔画
 } from "./element.js";
 import type { 拼音分析结果 } from "./pinyin.js";
 import { 获取注册表 } from "./registry.js";
@@ -197,6 +198,7 @@ class 默认组装器 extends 按规则构词 {
   }
 }
 
+
 class 星空键道组装器 extends 按规则构词<默认部件分析, 星空键道复合体分析> {
   static readonly type = "星空键道";
   constructor(private 配置: 组装配置) {
@@ -246,6 +248,139 @@ class 星空键道组装器 extends 按规则构词<默认部件分析, 星空�
       元素序列.splice(2 + 4); // 一共最多取四个形码
     }
     return ok({ 元素序列: 元素序列 });
+  }
+}
+
+class 尺素组装器 extends 按规则构词<默认部件分析, 默认复合体分析> {
+  static readonly type = "尺素";
+  constructor(private 配置: 组装配置) {
+    super(配置);
+  }
+
+  一字词组装(
+    汉字: 字符,
+    字形分析: 默认部件分析 | 默认复合体分析,
+    _: Map<string, 拼音元素>,
+  ) {
+    const 元素序列: 强类型元素位或编码[] = []
+    const 字根序列 = 字形分析.字根序列;
+    const 自定义元素映射 = this.配置.自定义分析映射.get(汉字);
+    if (字根序列.length == 1){
+
+    }
+    else if (字根序列.length == 2){
+    //直接取两字根，如均非笔画,补结构
+      for (const 字根 of 字根序列) {
+        const 名称 = 字根 instanceof 部件 ? 字根.字符 : 字根;
+          元素序列.push({ element: 名称, index: 0 });
+      }
+      
+      if (!(字根序列[0] instanceof 笔画) && !(字根序列[1] instanceof 笔画) && 自定义元素映射) {
+      // 遍历映射里的每一组（键是子类型，值是实例数组）
+        for (const [子类型, 元素列表] of 自定义元素映射) {
+          // 遍历这一组里的每一个自定义元素实例
+          for (const 元素实例 of 元素列表) {
+            // ★★★ 直接把实例塞进元素序列 ★★★
+            // 因为 元素实例 本身就是 自定义元素 类造出来的对象，它天然就有 获取名称() 方法，完全符合 元素 接口
+            元素序列.push({ element: 元素实例, index: 0 });
+          }
+        }
+      }
+    }
+    else if(字根序列.length > 2){
+    //取第一、二个非笔画字根
+      let index = 0;
+      let count = 0;
+      for(index = 0; index < 字根序列.length; index++){
+        if(count == 2){
+          break;
+        }
+        if(!(字根序列[index] instanceof 笔画)){
+          const 当前字根 = 字根序列[index];
+          if (!当前字根) {
+            continue;
+          }
+          const 名称 = 当前字根 instanceof 部件 ? 当前字根.字符 : 当前字根;
+          if(count < 2){
+            元素序列.push({ element: 名称, index: 0 });
+            count ++ ;
+          }
+        } 
+      }
+      if(count < 2 && 自定义元素映射){
+      //如果没取到两根，就补结构码至三码
+        for(let i = 0; i < 3 - count; i++){
+          for (const [子类型, 元素列表] of 自定义元素映射) {
+          // 遍历这一组里的每一个自定义元素实例
+            for (const 元素实例 of 元素列表) {
+            // ★★★ 直接把实例塞进元素序列 ★★★
+              // 因为 元素实例 本身就是 自定义元素 类造出来的对象，它天然就有 获取名称() 方法，完全符合 元素 接口
+              元素序列.push({ element: 元素实例, index: 0 });
+            }
+          }
+        }
+      }
+      else if(count == 2 && index == 字根序列.length && 自定义元素映射){
+      //如果取到两根且根已取完，补结构码
+        for (const [子类型, 元素列表] of 自定义元素映射) {
+        // 遍历这一组里的每一个自定义元素实例
+          for (const 元素实例 of 元素列表) {
+          // ★★★ 直接把实例塞进元素序列 ★★★
+            // 因为 元素实例 本身就是 自定义元素 类造出来的对象，它天然就有 获取名称() 方法，完全符合 元素 接口
+            元素序列.push({ element: 元素实例, index: 0 });
+          }
+        }
+      }
+      else if(count == 2 && index < 字根序列.length){
+      //如果取到两根且根没取完，继续
+        count = 0;
+        for(index ; index < 字根序列.length; index++){
+          if((字根序列[index] instanceof 笔画)){
+            const 当前字根 = 字根序列[index];
+            if (!当前字根) {
+              continue;
+            }
+            const 名称 = 当前字根 instanceof 部件 ? 当前字根.字符 : 当前字根;
+            元素序列.push({ element: 名称, index: 0 });
+            count ++ ;
+            index ++ ;
+            break;
+          }
+        }
+        if(count == 0){
+        //没找到笔画，直接取末根（此时末根一定非笔画，且没取过，所以不用判断）
+          const 当前字根 = 字根序列[字根序列.length - 1];
+          if (当前字根) {
+            const 名称 = 当前字根 instanceof 部件 ? 当前字根.字符 : 当前字根;
+            元素序列.push({ element: 名称, index: 0 });
+          }
+        }
+        else if(count == 1){
+        //如找到笔画，取完了就补结构，没取完就取末根
+          if(index == 字根序列.length && 自定义元素映射){
+            for (const [子类型, 元素列表] of 自定义元素映射) {
+            // 遍历这一组里的每一个自定义元素实例
+              for (const 元素实例 of 元素列表) {
+              // ★★★ 直接把实例塞进元素序列 ★★★
+                // 因为 元素实例 本身就是 自定义元素 类造出来的对象，它天然就有 获取名称() 方法，完全符合 元素 接口
+                元素序列.push({ element: 元素实例, index: 0 });
+              }
+            }
+          }
+          else if(index < 字根序列.length){
+            const 当前字根 = 字根序列[字根序列.length - 1];
+            if (当前字根) {
+              const 名称 = 当前字根 instanceof 部件 ? 当前字根.字符 : 当前字根;
+              元素序列.push({ element: 名称, index: 0 });
+            }
+          }
+        }
+      }
+      
+    }
+
+    
+  return ok({ 元素序列: 元素序列 });
   }
 }
 
@@ -358,4 +493,4 @@ const 动态组装 = (
 };
 
 export type { 动态组装条目, 组装器, 组装条目, 组装配置, 默认汉字分析 };
-export { 动态组装, 星空键道组装器, 组装, 默认组装器 };
+export { 动态组装, 星空键道组装器, 组装, 默认组装器, 尺素组装器 };
